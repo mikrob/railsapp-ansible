@@ -10,6 +10,9 @@ db_password=railspassword
 [front]
 front-prodmikrob.devops.net
 
+[front:vars]
+app_ip=10.1.0.118
+
 [app]
 app-prodmikrob.devops.net
 

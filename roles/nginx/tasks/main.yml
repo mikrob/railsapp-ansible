@@ -3,3 +3,12 @@
   apt:
     name: nginx
     state: latest
+
+- name: deploy vhosts
+  template:
+    src: "nginx_vhost.conf.j2"
+    dest: "/etc/nginx/sites-enabled/default"
+    owner: "www-data"
+    group: "www-data"
+    mode: 0600
+  notify: Reload nginx
