@@ -30,7 +30,6 @@
     owner: "{{ deploy_user }}"
     group: "{{ deploy_user }}"
     mode: 0600
-  notify: Restart tasklist
 
 - name: Run bundler
   become_user: "{{ deploy_user }}"
