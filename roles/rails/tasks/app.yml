@@ -1,0 +1,99 @@
+---
+- name: add ssh keys to deploy user
+  copy:
+    src: "{{ item }}"
+    dest: "/home/{{ deploy_user}}/.ssh/{{ item }}"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: 0600
+  with_items:
+    - id_rsa
+    - id_rsa.pub
+
+- name: Kill puma if running
+  shell: file /run/puma.pid >/dev/null && kill `cat /run/puma.pid` 2>/dev/null
+  ignore_errors: True
+
+- name: Clone app repo
+  become_user: "{{ deploy_user }}"
+  git:
+    repo: git@github.com:mikrob/railsapp.git
+    dest: "{{ app_dir }}"
+    version: master
+    force: yes
+    accept_hostkey: yes
+
+- name: Setup database.yml
+  template:
+    src: "database.yml.j2"
+    dest: "{{ app_dir }}/config/database.yml"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: 0600
+  notify: Restart tasklist
+
+- name: Run bundler
+  become_user: "{{ deploy_user }}"
+  shell: "chruby-exec ruby-{{ ruby_version }} -- bundle install --without development test"
+  args:
+    chdir: "{{ app_dir }}"
+
+- name: Run yarn check
+  become_user: "{{ deploy_user }}"
+  shell: "yarn install --check-files --ignore-engines"
+  args:
+    chdir: "{{ app_dir }}"
+  environment:
+    RAILS_ENV: "production"
+
+- name: Run db:setup
+  become_user: "{{ deploy_user }}"
+  shell: "chruby-exec ruby-{{ ruby_version }} -- bundle exec rails db:setup"
+  environment:
+    RAILS_ENV: "production"
+  args:
+    chdir: "{{ app_dir }}"
+  run_once: true
+  ignore_errors: True
+
+- name: Run db:migrate
+  become_user: "{{ deploy_user }}"
+  shell: "chruby-exec ruby-{{ ruby_version }} -- bundle exec rails db:migrate"
+  environment:
+    RAILS_ENV: "production"
+  args:
+    chdir: "{{ app_dir }}"
+  run_once: true
+
+# - name: Run assets precompilation
+#   become_user: "{{ deploy_user }}"
+#   shell: "chruby-exec ruby-{{ ruby_version }} -- bundle exec rake assets:precompile"
+#   args:
+#     chdir: "{{ app_dir }}"
+#   environment:
+#     RAILS_ENV: "production"
+
+
+# - name: Run rails server
+#   become_user: "{{ deploy_user }}"
+#   environment:
+#     RAILS_ENV: "production"
+#   shell: "chruby-exec ruby-{{ ruby_version }} -- bundle exec rails server -b 0.0.0.0 -p 80 --pid /run/puma.pid -d"
+#   args:
+#     chdir: "{{ app_dir }}"
+
+- name: deploy systemd service unit for puma
+  template:
+    src: "systemd.j2"
+    dest: "/etc/systemd/system/tasklist.service"
+    mode: 0755
+  notify: Restart tasklist
+
+- name: "Force systemd to reread configs"
+  systemd:
+    daemon_reload: true
+
+- name: "Enable service tasklist"
+  service:
+    name: "tasklist"
+    enabled: true

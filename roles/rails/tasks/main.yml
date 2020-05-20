@@ -1,0 +1,4 @@
+- include: setup.yml
+- include: app.yml
+  tags:
+    - app

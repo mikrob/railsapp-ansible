@@ -1,0 +1,4 @@
+---
+- name: Restart tasklist
+  listen:  Restart tasklist
+  command: sudo service tasklist restart
