@@ -23,10 +23,13 @@
     - build-essential
     - sqlite3
 
-- name: Download ruby-install
-  get_url:
-    url: https://github.com/postmodern/ruby-install/archive/v0.7.0.tar.gz
-    dest: /home/ubuntu/ruby-install-0.7.0.tar.gz
+# - name: Download ruby-install
+#   get_url:
+#     url: https://github.com/postmodern/ruby-install/archive/v0.7.0.tar.gz
+#     dest: /home/ubuntu/ruby-install-0.7.0.tar.gz
+#     timeout: 3600
+#   args:
+#     creates: "/home/ubuntu/ruby-install-0.7.0.tar.gz"
 
 - name: Extract ruby-install tarball
   unarchive:
@@ -46,10 +49,13 @@
   args:
     creates: "/home/{{ deploy_user }}/.rubies/ruby-{{ ruby_version }}"
 
-- name: Download chruby
-  get_url:
-    url: https://github.com/postmodern/chruby/archive/v0.3.9.tar.gz
-    dest: /home/ubuntu/chruby-0.3.9.tar.gz
+# - name: Download chruby
+#   get_url:
+#     timeout: 3600
+#     url: https://github.com/postmodern/chruby/archive/v0.3.9.tar.gz
+#     dest: /home/ubuntu/chruby-0.3.9.tar.gz
+#   args:
+#     creates: "/home/ubuntu/chruby-0.3.9.tar.gz"
 
 - name: Extract chruby tarball
   unarchive:

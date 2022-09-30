@@ -17,11 +17,11 @@
 - name: Clone app repo
   become_user: "{{ deploy_user }}"
   git:
-    repo: git@github.com:mikrob/railsapp.git
+    repo: https://github.com/mikrob/railsapp.git
     dest: "{{ app_dir }}"
     version: master
     force: yes
-    accept_hostkey: yes
+    # accept_hostkey: yes
 
 - name: Setup database.yml
   template:
@@ -30,6 +30,14 @@
     owner: "{{ deploy_user }}"
     group: "{{ deploy_user }}"
     mode: 0600
+
+
+- name: Run bundler update
+  become_user: "{{ deploy_user }}"
+  shell: "chruby-exec ruby-{{ ruby_version }} -- bundle update"
+  args:
+    chdir: "{{ app_dir }}"
+
 
 - name: Run bundler
   become_user: "{{ deploy_user }}"
